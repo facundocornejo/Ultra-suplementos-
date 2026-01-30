@@ -81,6 +81,18 @@
 - [x] Embeddings de productos con pgvector (búsqueda semántica)
 - [x] RAG (Retrieval Augmented Generation)
 
+### Compras a Proveedores
+- [x] CRUD de ordenes de compra (`purchases` + `purchase_items`)
+- [x] Formulario con items dinamicos (agregar/quitar productos)
+- [x] Incremento automatico de stock al registrar compra
+- [x] Registro de movimientos de stock (tipo "entrada")
+- [x] Actualizacion de fecha de vencimiento al recibir mercaderia
+- [x] Numeracion automatica (C-YYYYMMDD-NNN)
+- [x] Reversion de stock al eliminar compra
+- [x] Estado de pago (pagado/pendiente)
+- [x] Pagina de detalle de compra con link a productos
+- [x] Link en sidebar
+
 ### Bugfixes aplicados (30/01/2026)
 - [x] Fix HuggingFace API: migrado de `api-inference.huggingface.co` a `router.huggingface.co/hf-inference/...`
 - [x] Fix Gemini modelo: actualizado referencia a `gemini-2.0-flash`
@@ -97,12 +109,6 @@
 - [ ] Validar flujo completo: abrir caja -> vender -> cerrar caja -> ver reporte
 - [ ] Verificar que los triggers de la DB funcionan correctamente (stock, cash_session)
 - [ ] Revisar manejo de errores en edge cases (stock insuficiente, sesión cerrada, etc.)
-
-### Módulo de Compras a Proveedores
-- [ ] CRUD de órdenes de compra (`purchases` + `purchase_items`)
-- [ ] Recepción de mercadería con incremento de stock
-- [ ] Asociar compras a proveedores existentes
-- [ ] Historial de compras con costos
 
 ### Gestión de Stock Avanzada
 - [ ] Ajustes manuales de inventario con motivo
