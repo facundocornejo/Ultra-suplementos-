@@ -11,10 +11,11 @@ import { notFound } from 'next/navigation'
 export default async function EditProductPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const [productResult, categoriesResult, locationsResult] = await Promise.all([
-    getProduct(params.id),
+    getProduct(id),
     getCategories(),
     getLocations(),
   ])

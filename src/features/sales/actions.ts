@@ -134,29 +134,10 @@ export async function createSale(saleData: SaleFormData) {
     }
   }
 
-  // Actualizar stock de los productos (decrementar)
-  for (const item of validatedData.items) {
-    const { error: updateError } = await supabase.rpc('decrement_product_stock', {
-      product_id: item.product_id,
-      quantity: item.quantity,
-    })
-
-    if (updateError) {
-      console.error('Error updating stock:', updateError)
-      // No revertir la venta, pero loguear el error
-    }
-  }
-
-  // Crear movimientos de stock
-  for (const item of validatedData.items) {
-    await supabase.from('stock_movements').insert({
-      product_id: item.product_id,
-      movement_type: 'sale',
-      quantity: -item.quantity,
-      reference_id: sale.id,
-      notes: `Venta #${sale.id}`,
-    })
-  }
+  // NOTA: El trigger de la DB (trigger_update_stock_on_sale) ya:
+  // 1. Decrementa el stock automáticamente
+  // 2. Crea los movimientos de stock
+  // No es necesario hacerlo manualmente aquí
 
   revalidatePath('/dashboard/sales')
   revalidatePath('/dashboard/products')
@@ -184,7 +165,7 @@ export async function getSale(id: string) {
       ),
       customers (
         id,
-        name,
+        full_name,
         email,
         phone
       )
@@ -213,7 +194,7 @@ export async function getSales(params?: {
       *,
       customers (
         id,
-        name
+        full_name
       )
     `)
     .order('created_at', { ascending: false })

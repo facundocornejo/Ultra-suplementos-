@@ -2,9 +2,9 @@
 
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { uploadProductImage } from '../actions'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import { compressImage, formatFileSize } from '@/shared/lib/image-utils'
 
 interface ImageUploadProps {
   currentImageUrl: string | null
@@ -19,6 +19,7 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl)
+  const [compressionInfo, setCompressionInfo] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,41 +28,61 @@ export function ImageUpload({
 
     // Validar tipo de archivo
     if (!file.type.startsWith('image/')) {
-      toast.error('Por favor selecciona una imagen válida')
+      toast.error('Por favor selecciona una imagen valida')
       return
     }
 
-    // Validar tamaño (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('La imagen debe ser menor a 5MB')
+    // Validar tamano original (maximo 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('La imagen debe ser menor a 10MB')
       return
     }
 
-    // Mostrar preview local
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string)
-    }
-    reader.readAsDataURL(file)
-
-    // Subir a Supabase
     setIsUploading(true)
+    setCompressionInfo(null)
+
     try {
-      const result = await uploadProductImage(file, productId)
+      // Comprimir imagen a WebP
+      const originalSize = file.size
+      const compressedBlob = await compressImage(file, 800, 800, 0.8)
+      const compressedSize = compressedBlob.size
 
-      if (result.error) {
-        toast.error('Error al subir la imagen: ' + result.error)
-        setPreviewUrl(currentImageUrl)
-        return
+      // Mostrar info de compresion
+      const savings = Math.round((1 - compressedSize / originalSize) * 100)
+      setCompressionInfo(
+        `${formatFileSize(originalSize)} → ${formatFileSize(compressedSize)} (${savings}% reducido)`
+      )
+
+      // Mostrar preview local
+      const previewBlobUrl = URL.createObjectURL(compressedBlob)
+      setPreviewUrl(previewBlobUrl)
+
+      // Crear FormData para subir
+      const formData = new FormData()
+      formData.append('file', compressedBlob, 'image.webp')
+      if (productId) {
+        formData.append('productId', productId)
       }
 
-      if (result.data) {
-        onImageUploaded(result.data.publicUrl)
-        toast.success('Imagen subida correctamente')
+      // Subir via API route
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al subir la imagen')
       }
+
+      onImageUploaded(result.publicUrl)
+      toast.success('Imagen subida correctamente')
     } catch (error) {
-      toast.error('Error al subir la imagen')
+      console.error('Error uploading image:', error)
+      toast.error(error instanceof Error ? error.message : 'Error al subir la imagen')
       setPreviewUrl(currentImageUrl)
+      setCompressionInfo(null)
     } finally {
       setIsUploading(false)
     }
@@ -69,6 +90,7 @@ export function ImageUpload({
 
   const handleRemoveImage = () => {
     setPreviewUrl(null)
+    setCompressionInfo(null)
     onImageUploaded('')
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -85,8 +107,12 @@ export function ImageUpload({
               alt="Preview"
               fill
               className="object-cover"
+              unoptimized={previewUrl.startsWith('blob:')}
             />
           </div>
+          {compressionInfo && (
+            <p className="mt-2 text-xs text-green-600">{compressionInfo}</p>
+          )}
           <div className="mt-2 flex gap-2">
             <Button
               type="button"
@@ -127,7 +153,9 @@ export function ImageUpload({
             />
           </svg>
           <p className="text-sm text-gray-600">Click para subir una imagen</p>
-          <p className="mt-1 text-xs text-gray-500">PNG, JPG hasta 5MB</p>
+          <p className="mt-1 text-xs text-gray-500">
+            PNG, JPG, WEBP, HEIC (se comprime automaticamente)
+          </p>
         </div>
       )}
 
@@ -141,7 +169,10 @@ export function ImageUpload({
       />
 
       {isUploading && (
-        <p className="text-sm text-gray-600">Subiendo imagen...</p>
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-orange-500" />
+          <p className="text-sm text-gray-600">Comprimiendo y subiendo...</p>
+        </div>
       )}
     </div>
   )

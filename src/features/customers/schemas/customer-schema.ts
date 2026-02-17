@@ -1,20 +1,51 @@
 import { z } from 'zod'
+import {
+  optionalEmailSchema,
+  optionalPhoneSchema,
+  optionalDNISchema,
+  addressSchema,
+  citySchema,
+  notesSchema,
+  sanitizeText,
+  NAME_REGEX,
+  MAX_TEXT_SHORT,
+} from '@/shared/lib/validations'
 
 export const customerSchema = z.object({
-  full_name: z.string().min(1, 'El nombre es requerido').max(200, 'El nombre es muy largo'),
-  email: z.string().email('Email inválido').optional().nullable().or(z.literal('')),
-  phone: z.string().max(50, 'El teléfono es muy largo').optional().nullable(),
-  dni: z.string().max(20, 'El DNI es muy largo').optional().nullable(),
-  address: z.string().max(500, 'La dirección es muy larga').optional().nullable(),
-  city: z.string().max(100, 'La ciudad es muy larga').optional().nullable(),
-  notes: z.string().max(1000, 'Las notas son muy largas').optional().nullable(),
+  full_name: z
+    .string()
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(MAX_TEXT_SHORT, 'El nombre es muy largo (maximo 200 caracteres)')
+    .transform((val) => sanitizeText(val))
+    .refine((val) => val.length >= 2, {
+      message: 'El nombre debe tener al menos 2 caracteres',
+    })
+    .refine((val) => NAME_REGEX.test(val), {
+      message: 'El nombre solo puede contener letras, espacios y guiones',
+    }),
+
+  email: optionalEmailSchema,
+
+  phone: optionalPhoneSchema,
+
+  dni: optionalDNISchema,
+
+  address: addressSchema,
+
+  city: citySchema,
+
+  notes: notesSchema,
 })
 
 export type CustomerFormData = z.infer<typeof customerSchema>
 
 export const customerSearchSchema = z.object({
-  search: z.string().optional(),
-  page: z.coerce.number().min(1).default(1),
+  search: z
+    .string()
+    .max(100, 'Busqueda muy larga')
+    .optional()
+    .transform((val) => sanitizeText(val || '')),
+  page: z.coerce.number().min(1).max(10000).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
 })
 

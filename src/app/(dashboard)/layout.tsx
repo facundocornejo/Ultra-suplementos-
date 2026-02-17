@@ -1,10 +1,9 @@
 import { signOut, getUser } from '@/features/auth/actions'
 import Image from 'next/image'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Toaster } from '@/components/ui/sonner'
 import { SessionIndicator } from '@/features/cash-sessions/components/session-indicator'
-import { ChatWidget } from '@/features/ai/components'
+import { Sidebar } from '@/shared/components/sidebar'
 
 export default async function DashboardLayout({
   children,
@@ -57,87 +56,12 @@ export default async function DashboardLayout({
 
       {/* Main Content */}
       <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-[calc(100vh-73px)]">
-          <nav className="p-4 space-y-1">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-900 bg-orange-50 border border-orange-200"
-            >
-              <span>📊</span>
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/products"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>📦</span>
-              Productos
-            </Link>
-            <Link
-              href="/dashboard/sales"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>💰</span>
-              Ventas / POS
-            </Link>
-            <Link
-              href="/dashboard/cash"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>💵</span>
-              Caja
-            </Link>
-            <Link
-              href="/dashboard/customers"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>👥</span>
-              Clientes
-            </Link>
-            <Link
-              href="/dashboard/suppliers"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>🏢</span>
-              Proveedores
-            </Link>
-            <Link
-              href="/dashboard/purchases"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>🛒</span>
-              Compras
-            </Link>
-            <Link
-              href="/dashboard/stock"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>📊</span>
-              Stock
-            </Link>
-            <Link
-              href="/dashboard/reports"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>📈</span>
-              Reportes
-            </Link>
-            <Link
-              href="/dashboard/marketing"
-              className="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <span>✨</span>
-              Marketing IA
-            </Link>
-          </nav>
-        </aside>
-
-        {/* Page Content */}
+        <Sidebar />
         <main className="flex-1 p-8">{children}</main>
       </div>
       <Toaster />
-      <ChatWidget />
+      {/* IA deshabilitada temporalmente - API quota agotada */}
+      {/* <ChatWidget /> */}
     </div>
   )
 }
