@@ -7,8 +7,7 @@ import {
 export const saleItemSchema = z.object({
   product_id: z
     .string()
-    .min(1, 'ID de producto requerido')
-    .uuid('Producto invalido'),
+    .min(1, 'ID de producto requerido'),
 
   product_name: z
     .string()
