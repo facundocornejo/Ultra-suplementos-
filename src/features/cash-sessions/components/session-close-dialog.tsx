@@ -77,7 +77,7 @@ export function SessionCloseDialog({
       setClosingNotes('')
       onOpenChange(false)
       router.refresh()
-    } catch (err) {
+    } catch {
       setError('Error al cerrar la sesión de caja')
       toast.error('Error al cerrar la sesión de caja')
     } finally {

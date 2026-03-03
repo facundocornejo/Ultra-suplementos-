@@ -4,6 +4,7 @@ import { createServerActionClient } from '@/core/infrastructure/supabase/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { supplierSchema } from './schemas/supplier-schema'
+import { escapeILike } from '@/shared/lib/formatters'
 
 export async function getSuppliers(params?: {
   search?: string
@@ -11,6 +12,13 @@ export async function getSuppliers(params?: {
   limit?: number
 }) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado', count: 0 }
+  }
+
   const page = params?.page || 1
   const limit = params?.limit || 20
   const offset = (page - 1) * limit
@@ -23,8 +31,9 @@ export async function getSuppliers(params?: {
     .range(offset, offset + limit - 1)
 
   if (params?.search) {
+    const escaped = escapeILike(params.search)
     query = query.or(
-      `business_name.ilike.%${params.search}%,contact_name.ilike.%${params.search}%,cuit.ilike.%${params.search}%,phone.ilike.%${params.search}%`
+      `business_name.ilike.%${escaped}%,contact_name.ilike.%${escaped}%,cuit.ilike.%${escaped}%,phone.ilike.%${escaped}%`
     )
   }
 
@@ -40,6 +49,12 @@ export async function getSuppliers(params?: {
 
 export async function getSupplier(id: string) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   const { data, error } = await supabase
     .from('suppliers')
@@ -58,12 +73,19 @@ export async function getSupplier(id: string) {
 export async function searchSuppliers(search: string) {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
+  const escaped = escapeILike(search)
   const { data, error } = await supabase
     .from('suppliers')
     .select('id, business_name, contact_name, cuit')
     .eq('is_active', true)
     .or(
-      `business_name.ilike.%${search}%,cuit.ilike.%${search}%`
+      `business_name.ilike.%${escaped}%,cuit.ilike.%${escaped}%`
     )
     .limit(10)
 
@@ -111,11 +133,9 @@ export async function createSupplier(formData: FormData) {
     }
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('suppliers')
     .insert(validationResult.data)
-    .select()
-    .single()
 
   if (error) {
     console.error('Error creating supplier:', error)
@@ -162,12 +182,10 @@ export async function updateSupplier(id: string, formData: FormData) {
     }
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('suppliers')
     .update(validationResult.data)
     .eq('id', id)
-    .select()
-    .single()
 
   if (error) {
     console.error('Error updating supplier:', error)
@@ -199,6 +217,12 @@ export async function deleteSupplier(id: string) {
 
 export async function getSupplierPurchases(supplierId: string) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   const { data, error } = await supabase
     .from('purchases')

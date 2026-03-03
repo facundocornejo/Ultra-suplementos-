@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { PurchaseForm } from '@/features/purchases/components/purchase-form'
 import { createServerActionClient } from '@/core/infrastructure/supabase/client'
 
@@ -26,9 +27,9 @@ export default async function NewPurchasePage() {
         <h1 className="text-2xl font-bold text-gray-900">Nueva Compra</h1>
         <p className="text-gray-500">
           Necesitas tener al menos un proveedor registrado.{' '}
-          <a href="/dashboard/suppliers/new" className="text-orange-600 hover:underline">
+          <Link href="/dashboard/suppliers/new" className="text-orange-600 hover:underline">
             Crear proveedor
-          </a>
+          </Link>
         </p>
       </div>
     )
@@ -40,9 +41,9 @@ export default async function NewPurchasePage() {
         <h1 className="text-2xl font-bold text-gray-900">Nueva Compra</h1>
         <p className="text-gray-500">
           Necesitas tener al menos un producto registrado.{' '}
-          <a href="/dashboard/products/new" className="text-orange-600 hover:underline">
+          <Link href="/dashboard/products/new" className="text-orange-600 hover:underline">
             Crear producto
-          </a>
+          </Link>
         </p>
       </div>
     )

@@ -153,3 +153,16 @@ export function formatRelativeTime(date: Date | string | number): string {
 
   return formatDate(dateObj)
 }
+
+/**
+ * Escapa caracteres especiales para búsquedas ILIKE de PostgreSQL
+ * Previene ataques de DoS donde un usuario busca '%' para obtener todos los resultados
+ * @param search - Término de búsqueda
+ * @returns Término escapado seguro para ilike
+ */
+export function escapeILike(search: string): string {
+  return search
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+}

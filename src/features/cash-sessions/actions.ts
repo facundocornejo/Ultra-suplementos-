@@ -8,8 +8,10 @@ import {
   cashMovementSchema,
 } from './schemas/cash-session-schema'
 
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 // Helper para asegurar que el profile del usuario existe
-async function ensureUserProfile(supabase: any, user: { id: string; email?: string | null }) {
+async function ensureUserProfile(supabase: SupabaseClient, user: { id: string; email?: string | null }) {
   const { data: existingProfile } = await supabase
     .from('profiles')
     .select('id')

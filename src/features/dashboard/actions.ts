@@ -10,7 +10,7 @@ export async function getDashboardStats() {
   today.setHours(0, 0, 0, 0)
   const todayISO = today.toISOString()
 
-  const { data: todaySales, error: salesError } = await supabase
+  const { data: todaySales } = await supabase
     .from('sales')
     .select('total')
     .gte('created_at', todayISO)
@@ -19,29 +19,32 @@ export async function getDashboardStats() {
   const salesCount = todaySales?.length || 0
 
   // Obtener total de productos
-  const { count: productsCount, error: productsError } = await supabase
+  const { count: productsCount } = await supabase
     .from('products')
     .select('*', { count: 'exact', head: true })
 
-  // Obtener productos con stock bajo
-  const { data: lowStockProducts, error: lowStockError } = await supabase
-    .from('products')
-    .select('*')
-    .lte('stock', supabase.rpc('stock', { product_id: 'id' }))
+  // Obtener productos con stock bajo usando la vista de la DB
+  const { count: lowStockFromView, error: lowStockError } = await supabase
+    .from('products_low_stock')
+    .select('*', { count: 'exact', head: true })
 
-  // Contar manualmente productos con stock bajo
-  const { data: allProducts } = await supabase
-    .from('products')
-    .select('stock, min_stock')
+  // Si la vista falla, contar manualmente
+  let finalLowStockCount = lowStockFromView || 0
+  if (lowStockError) {
+    const { data: allProducts } = await supabase
+      .from('products')
+      .select('stock, min_stock')
+      .eq('is_active', true)
 
-  const lowStockCount = allProducts?.filter(p => p.stock <= p.min_stock).length || 0
+    finalLowStockCount = allProducts?.filter(p => p.stock <= p.min_stock).length || 0
+  }
 
   // Obtener productos próximos a vencer (3 meses)
   const threeMonthsFromNow = new Date()
   threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3)
   const threeMonthsISO = threeMonthsFromNow.toISOString()
 
-  const { data: expiringProducts, error: expiringError } = await supabase
+  const { data: expiringProducts } = await supabase
     .from('products')
     .select('*')
     .not('expiration_date', 'is', null)
@@ -53,7 +56,7 @@ export async function getDashboardStats() {
     totalSalesToday,
     salesCount,
     productsCount: productsCount || 0,
-    lowStockCount,
+    lowStockCount: finalLowStockCount,
     expiringCount,
   }
 }

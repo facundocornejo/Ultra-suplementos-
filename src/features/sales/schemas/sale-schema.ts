@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import {
-  moneySchema,
   MAX_QUANTITY,
   MAX_PRICE,
 } from '@/shared/lib/validations'

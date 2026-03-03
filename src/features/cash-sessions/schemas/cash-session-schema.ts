@@ -1,6 +1,5 @@
 import { z } from 'zod'
 import {
-  moneySchema,
   notesSchema,
   sanitizeText,
   MAX_PRICE,

@@ -4,6 +4,7 @@ import { createServerActionClient } from '@/core/infrastructure/supabase/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { purchaseSchema } from './schemas/purchase-schema'
+import { escapeILike } from '@/shared/lib/formatters'
 
 // =============================================================================
 // LISTAR COMPRAS
@@ -16,6 +17,13 @@ export async function getPurchases(params?: {
   limit?: number
 }) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado', count: 0 }
+  }
+
   const page = params?.page || 1
   const limit = params?.limit || 20
   const offset = (page - 1) * limit
@@ -48,8 +56,9 @@ export async function getPurchases(params?: {
   }
 
   if (params?.search) {
+    const escaped = escapeILike(params.search)
     query = query.or(
-      `purchase_number.ilike.%${params.search}%`
+      `purchase_number.ilike.%${escaped}%`
     )
   }
 
@@ -69,6 +78,12 @@ export async function getPurchases(params?: {
 
 export async function getPurchase(id: string) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   const { data, error } = await supabase
     .from('purchases')
@@ -124,6 +139,12 @@ export async function createPurchase(formData: {
   }[]
 }) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   // Validar con Zod
   const validationResult = purchaseSchema.safeParse(formData)
@@ -214,8 +235,10 @@ export async function createPurchase(formData: {
       await supabase.from('stock_movements').insert({
         product_id: item.product_id,
         quantity: item.quantity,
-        type: 'entrada',
+        type: 'purchase',
         reason: `Compra ${purchaseNumber}`,
+        previous_stock: product.stock,
+        new_stock: newStock,
       })
 
       // Actualizar fecha de vencimiento del producto si se proporcionó
@@ -240,6 +263,12 @@ export async function createPurchase(formData: {
 
 export async function deletePurchase(id: string) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'No autenticado' }
+  }
 
   // Obtener items para revertir stock
   const { data: purchase } = await supabase
@@ -272,8 +301,10 @@ export async function deletePurchase(id: string) {
         await supabase.from('stock_movements').insert({
           product_id: item.product_id,
           quantity: -item.quantity,
-          type: 'ajuste',
+          type: 'adjustment',
           reason: `Compra ${purchase.purchase_number} eliminada`,
+          previous_stock: product.stock,
+          new_stock: newStock,
         })
       }
     }

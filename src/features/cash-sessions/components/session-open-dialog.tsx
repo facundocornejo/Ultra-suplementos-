@@ -49,7 +49,7 @@ export function SessionOpenDialog({ open, onOpenChange }: SessionOpenDialogProps
       setOpeningBalance('')
       onOpenChange(false)
       router.refresh()
-    } catch (err) {
+    } catch {
       setError('Error al abrir la sesión de caja')
       toast.error('Error al abrir la sesión de caja')
     } finally {

@@ -2,7 +2,6 @@ import { z } from 'zod'
 import {
   moneySchema,
   quantitySchema,
-  notesSchema,
   sanitizeText,
   isFutureDate,
   MAX_TEXT_SHORT,

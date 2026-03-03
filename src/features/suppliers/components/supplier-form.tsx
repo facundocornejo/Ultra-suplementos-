@@ -22,7 +22,8 @@ interface Supplier {
 
 interface SupplierFormProps {
   supplier?: Supplier
-  action: (formData: FormData) => Promise<any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  action: (formData: FormData) => any
 }
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
@@ -39,7 +40,7 @@ export function SupplierForm({ supplier, action }: SupplierFormProps) {
   const isEditing = !!supplier
 
   return (
-    <form action={action}>
+    <form action={action as (formData: FormData) => void}>
       <Card>
         <CardHeader>
           <CardTitle>{isEditing ? 'Editar Proveedor' : 'Nuevo Proveedor'}</CardTitle>

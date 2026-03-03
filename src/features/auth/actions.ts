@@ -4,7 +4,7 @@ import { createServerActionClient } from '@/core/infrastructure/supabase/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-export async function signIn(prevState: any, formData: FormData) {
+export async function signIn(prevState: { error?: string } | null, formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 

@@ -32,7 +32,7 @@ interface POSScreenProps {
 }
 
 export function POSScreen({ products }: POSScreenProps) {
-  const { items, addItem, removeItem, updateQuantity, clear, subtotal, itemCount } = useCart()
+  const { items, addItem, removeItem, updateQuantity, clear, subtotal } = useCart()
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -94,7 +94,10 @@ export function POSScreen({ products }: POSScreenProps) {
         toast.success('Venta registrada correctamente')
       }
     } catch (err) {
-      const errorMessage = 'Error al procesar la venta'
+      console.error('Error en venta:', err)
+      const errorMessage = err instanceof Error
+        ? `Error: ${err.message}`
+        : 'Error inesperado al procesar la venta'
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {

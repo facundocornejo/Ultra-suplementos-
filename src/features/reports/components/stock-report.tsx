@@ -8,7 +8,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency, formatDate } from '@/shared/lib/formatters'
+import { formatCurrency } from '@/shared/lib/formatters'
 import { AlertTriangle, Package, TrendingDown, Calendar } from 'lucide-react'
 
 interface StockData {
@@ -38,8 +38,25 @@ interface StockReportProps {
   data: StockData
 }
 
+// Helper para calcular días hasta vencimiento (fuera del componente para evitar warning de pureza)
+function calculateExpiringProducts(products: StockData['expiringSoon']) {
+  const now = Date.now()
+  return products.slice(0, 10).map((product) => {
+    const daysUntil = Math.ceil(
+      (new Date(product.expiration_date).getTime() - now) / (1000 * 60 * 60 * 24)
+    )
+    return {
+      ...product,
+      daysUntil,
+      isExpired: daysUntil < 0,
+      isUrgent: daysUntil <= 30,
+    }
+  })
+}
+
 export function StockReport({ data }: StockReportProps) {
   const potentialProfit = data.inventoryValue.saleValue - data.inventoryValue.costValue
+  const expiringWithDays = calculateExpiringProducts(data.expiringSoon)
 
   return (
     <div className="space-y-6">
@@ -165,32 +182,23 @@ export function StockReport({ data }: StockReportProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.expiringSoon.slice(0, 10).map((product) => {
-                    const daysUntil = Math.ceil(
-                      (new Date(product.expiration_date).getTime() - Date.now()) /
-                        (1000 * 60 * 60 * 24)
-                    )
-                    const isExpired = daysUntil < 0
-                    const isUrgent = daysUntil <= 30
-
-                    return (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-medium truncate max-w-[200px]">
-                          {product.name}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant={isExpired ? 'destructive' : isUrgent ? 'secondary' : 'outline'}>
-                            {isExpired
-                              ? 'Vencido'
-                              : `${daysUntil} días`}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {product.stock}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
+                  {expiringWithDays.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium truncate max-w-[200px]">
+                        {product.name}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={product.isExpired ? 'destructive' : product.isUrgent ? 'secondary' : 'outline'}>
+                          {product.isExpired
+                            ? 'Vencido'
+                            : `${product.daysUntil} días`}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {product.stock}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             )}

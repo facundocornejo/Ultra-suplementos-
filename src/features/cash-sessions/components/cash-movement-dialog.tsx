@@ -64,7 +64,7 @@ export function CashMovementDialog({
       setReason('')
       onOpenChange(false)
       router.refresh()
-    } catch (err) {
+    } catch {
       setError('Error al registrar el movimiento')
       toast.error('Error al registrar el movimiento')
     } finally {

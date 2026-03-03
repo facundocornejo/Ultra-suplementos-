@@ -4,6 +4,7 @@ import { createServerActionClient } from '@/core/infrastructure/supabase/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { productSchema } from './schemas/product-schema'
+import { escapeILike } from '@/shared/lib/formatters'
 
 export async function getProducts(params?: {
   search?: string
@@ -12,6 +13,12 @@ export async function getProducts(params?: {
   expiringSoon?: boolean
 }) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   let query = supabase
     .from('products')
@@ -30,8 +37,9 @@ export async function getProducts(params?: {
 
   // Filtro de búsqueda
   if (params?.search) {
+    const escaped = escapeILike(params.search)
     query = query.or(
-      `name.ilike.%${params.search}%`
+      `name.ilike.%${escaped}%`
     )
   }
 
@@ -72,6 +80,12 @@ export async function getProducts(params?: {
 export async function getProduct(id: string) {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
   const { data, error } = await supabase
     .from('products')
     .select(`
@@ -99,6 +113,12 @@ export async function getProduct(id: string) {
 export async function getCategories() {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
   const { data, error } = await supabase
     .from('categories')
     .select('*')
@@ -115,6 +135,12 @@ export async function getCategories() {
 export async function getLocations() {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
   const { data, error } = await supabase
     .from('locations')
     .select('*')
@@ -130,6 +156,12 @@ export async function getLocations() {
 
 export async function createProduct(formData: FormData) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   // Convertir FormData a objeto
   const rawData = {
@@ -168,11 +200,9 @@ export async function createProduct(formData: FormData) {
   const validatedData = validationResult.data
 
   // Insertar en la base de datos
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('products')
     .insert(validatedData)
-    .select()
-    .single()
 
   if (error) {
     console.error('Error creating product:', error)
@@ -185,6 +215,12 @@ export async function createProduct(formData: FormData) {
 
 export async function updateProduct(id: string, formData: FormData) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   // Convertir FormData a objeto
   const rawData = {
@@ -223,12 +259,10 @@ export async function updateProduct(id: string, formData: FormData) {
   const validatedData = validationResult.data
 
   // Actualizar en la base de datos
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('products')
     .update(validatedData)
     .eq('id', id)
-    .select()
-    .single()
 
   if (error) {
     console.error('Error updating product:', error)
@@ -243,6 +277,31 @@ export async function updateProduct(id: string, formData: FormData) {
 export async function deleteProduct(id: string) {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'No autenticado' }
+  }
+
+  // Obtener el producto para eliminar la imagen si existe
+  const { data: product } = await supabase
+    .from('products')
+    .select('image_url')
+    .eq('id', id)
+    .single()
+
+  // Eliminar imagen del Storage si existe
+  if (product?.image_url) {
+    const url = new URL(product.image_url)
+    const pathMatch = url.pathname.match(/\/product-images\/(.+)$/)
+    if (pathMatch) {
+      const imagePath = decodeURIComponent(pathMatch[1])
+      await supabase.storage
+        .from('product-images')
+        .remove([imagePath])
+    }
+  }
+
   const { error } = await supabase.from('products').delete().eq('id', id)
 
   if (error) {
@@ -254,11 +313,37 @@ export async function deleteProduct(id: string) {
   return { error: null }
 }
 
+// Constantes para validación de imágenes
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+
 export async function uploadProductImage(file: File, productId?: string) {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
+  // Validar tipo de archivo
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return {
+      data: null,
+      error: 'Tipo de archivo no permitido. Solo se permiten: JPG, PNG, WebP, GIF'
+    }
+  }
+
+  // Validar tamaño de archivo
+  if (file.size > MAX_IMAGE_SIZE) {
+    return {
+      data: null,
+      error: 'El archivo es demasiado grande. Máximo 5MB permitido'
+    }
+  }
+
   // Generar nombre único para el archivo
-  const fileExt = file.name.split('.').pop()
+  const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
   const fileName = `${productId || Date.now()}.${fileExt}`
   const filePath = `products/${fileName}`
 
@@ -267,6 +352,7 @@ export async function uploadProductImage(file: File, productId?: string) {
     .from('product-images')
     .upload(filePath, file, {
       upsert: true,
+      contentType: file.type,
     })
 
   if (error) {

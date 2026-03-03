@@ -4,6 +4,7 @@ import { createServerActionClient } from '@/core/infrastructure/supabase/client'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { customerSchema } from './schemas/customer-schema'
+import { escapeILike } from '@/shared/lib/formatters'
 
 export async function getCustomers(params?: {
   search?: string
@@ -11,6 +12,13 @@ export async function getCustomers(params?: {
   limit?: number
 }) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado', count: 0 }
+  }
+
   const page = params?.page || 1
   const limit = params?.limit || 20
   const offset = (page - 1) * limit
@@ -23,8 +31,9 @@ export async function getCustomers(params?: {
     .range(offset, offset + limit - 1)
 
   if (params?.search) {
+    const escaped = escapeILike(params.search)
     query = query.or(
-      `full_name.ilike.%${params.search}%,email.ilike.%${params.search}%,phone.ilike.%${params.search}%,dni.ilike.%${params.search}%`
+      `full_name.ilike.%${escaped}%,email.ilike.%${escaped}%,phone.ilike.%${escaped}%,dni.ilike.%${escaped}%`
     )
   }
 
@@ -40,6 +49,12 @@ export async function getCustomers(params?: {
 
 export async function getCustomer(id: string) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   const { data, error } = await supabase
     .from('customers')
@@ -58,12 +73,19 @@ export async function getCustomer(id: string) {
 export async function searchCustomers(search: string) {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
+  const escaped = escapeILike(search)
   const { data, error } = await supabase
     .from('customers')
     .select('id, full_name, phone, dni')
     .eq('is_active', true)
     .or(
-      `full_name.ilike.%${search}%,phone.ilike.%${search}%,dni.ilike.%${search}%`
+      `full_name.ilike.%${escaped}%,phone.ilike.%${escaped}%,dni.ilike.%${escaped}%`
     )
     .limit(10)
 
@@ -110,11 +132,9 @@ export async function createCustomer(formData: FormData) {
     }
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('customers')
     .insert(validationResult.data)
-    .select()
-    .single()
 
   if (error) {
     console.error('Error creating customer:', error)
@@ -162,12 +182,10 @@ export async function updateCustomer(id: string, formData: FormData) {
     }
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('customers')
     .update(validationResult.data)
     .eq('id', id)
-    .select()
-    .single()
 
   if (error) {
     console.error('Error updating customer:', error)
@@ -202,6 +220,12 @@ export async function deleteCustomer(id: string) {
 
 export async function getCustomerSales(customerId: string) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   const { data, error } = await supabase
     .from('sales')

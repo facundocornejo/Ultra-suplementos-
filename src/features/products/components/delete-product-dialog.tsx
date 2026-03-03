@@ -47,7 +47,7 @@ export function DeleteProductDialog({
       toast.success('Producto eliminado correctamente')
       onOpenChange(false)
       router.refresh()
-    } catch (error) {
+    } catch {
       toast.error('Error al eliminar el producto')
     } finally {
       setIsDeleting(false)

@@ -21,7 +21,8 @@ interface Customer {
 
 interface CustomerFormProps {
   customer?: Customer
-  action: (formData: FormData) => Promise<any>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  action: (formData: FormData) => any
 }
 
 function SubmitButton({ isEditing }: { isEditing: boolean }) {
@@ -38,7 +39,7 @@ export function CustomerForm({ customer, action }: CustomerFormProps) {
   const isEditing = !!customer
 
   return (
-    <form action={action}>
+    <form action={action as (formData: FormData) => void}>
       <Card>
         <CardHeader>
           <CardTitle>{isEditing ? 'Editar Cliente' : 'Nuevo Cliente'}</CardTitle>

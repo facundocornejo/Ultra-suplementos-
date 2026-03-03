@@ -62,6 +62,7 @@ export function ProductForm({ categories, locations, product }: ProductFormProps
     setValue,
     control,
   } = useForm<ProductFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(productSchema) as any,
     defaultValues: product
       ? {
@@ -112,7 +113,7 @@ export function ProductForm({ categories, locations, product }: ProductFormProps
         } else {
           await createProduct(formData)
         }
-      } catch (err) {
+      } catch {
         setError('Ocurrio un error al guardar el producto')
       }
     })
