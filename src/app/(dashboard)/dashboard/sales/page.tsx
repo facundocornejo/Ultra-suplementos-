@@ -1,8 +1,13 @@
 import { getProducts } from '@/features/products/actions'
+import { getPaymentSurcharges } from '@/features/settings/actions'
+import { DEFAULT_SURCHARGES } from '@/features/settings/schemas/settings-schema'
 import { POSScreen } from '@/features/sales/components/pos-screen'
 
 export default async function SalesPage() {
-  const productsResult = await getProducts()
+  const [productsResult, surchargesResult] = await Promise.all([
+    getProducts(),
+    getPaymentSurcharges(),
+  ])
 
   if (productsResult.error) {
     return (
@@ -23,6 +28,7 @@ export default async function SalesPage() {
   }
 
   const products = productsResult.data || []
+  const surcharges = surchargesResult.data || DEFAULT_SURCHARGES
 
   return (
     <div className="space-y-6">
@@ -33,7 +39,7 @@ export default async function SalesPage() {
         </p>
       </div>
 
-      <POSScreen products={products} />
+      <POSScreen products={products} surcharges={surcharges} />
     </div>
   )
 }

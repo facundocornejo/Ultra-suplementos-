@@ -10,6 +10,12 @@ export interface DateRange {
 export async function getSalesSummary(dateRange: DateRange) {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
   const { data, error } = await supabase
     .from('sales')
     .select('total, payment_method, created_at')
@@ -54,6 +60,12 @@ export async function getSalesSummary(dateRange: DateRange) {
 
 export async function getTopProducts(dateRange: DateRange, limit: number = 10) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   // Obtener items de venta en el rango
   const { data: saleItems, error } = await supabase
@@ -106,6 +118,12 @@ export async function getTopProducts(dateRange: DateRange, limit: number = 10) {
 
 export async function getStockReport() {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   // Productos con stock bajo (stock <= min_stock)
   const { data: lowStock, error: lowStockError } = await supabase
@@ -165,6 +183,12 @@ export async function getStockReport() {
 export async function getCashSessionsReport(dateRange: DateRange) {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
   const { data, error } = await supabase
     .from('cash_sessions')
     .select(`
@@ -209,6 +233,12 @@ export async function getCashSessionsReport(dateRange: DateRange) {
 
 export async function getStockMovementsReport(dateRange: DateRange, productId?: string) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   let query = supabase
     .from('stock_movements')
@@ -273,6 +303,12 @@ export async function getStockMovementsReport(dateRange: DateRange, productId?: 
 
 export async function getProfitReport(dateRange: DateRange) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   // Obtener ventas con items
   const { data: sales, error } = await supabase

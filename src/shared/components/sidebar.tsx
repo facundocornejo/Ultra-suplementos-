@@ -15,6 +15,7 @@ const navItems = [
   { href: '/dashboard/stock', label: 'Stock', icon: '📊' },
   { href: '/dashboard/reports', label: 'Reportes', icon: '📈' },
   { href: '/dashboard/marketing', label: 'Marketing IA', icon: '✨' },
+  { href: '/dashboard/settings', label: 'Configuración', icon: '⚙️' },
 ]
 
 export function Sidebar() {

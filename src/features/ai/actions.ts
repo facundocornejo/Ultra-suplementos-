@@ -47,6 +47,14 @@ export async function sendChatMessage(
   history: ChatHistoryMessage[]
 ): Promise<{ response: string; error?: string; isRateLimit?: boolean }> {
   try {
+    const supabase = await createServerActionClient()
+
+    // Verificar autenticación
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { response: '', error: 'No autenticado' }
+    }
+
     // Convertir al formato que espera groq
     const groqHistory: GroqChatMessage[] = history.map((m) => ({
       role: m.role,
@@ -83,6 +91,12 @@ export async function generateAndSaveDescription(
 ): Promise<GenerateDescriptionResult> {
   try {
     const supabase = await createServerActionClient()
+
+    // Verificar autenticación
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { description: '', error: 'No autenticado' }
+    }
 
     // Obtener producto con su categoría
     const { data: product, error: fetchError } = await supabase
@@ -142,6 +156,12 @@ export async function generateProductSocialPost(
   try {
     const supabase = await createServerActionClient()
 
+    // Verificar autenticación
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { post: '', error: 'No autenticado' }
+    }
+
     const { data: product, error } = await supabase
       .from('products')
       .select('name, description, brand, sale_price, category:categories(name)')
@@ -196,11 +216,101 @@ Vistas útiles:
 - sales_daily_summary: resumen diario de ventas
 `
 
+// Patrones SQL peligrosos que NO deben permitirse
+const DANGEROUS_SQL_PATTERNS = [
+  /;/,                           // Múltiples statements
+  /--/,                          // Comentarios SQL
+  /\/\*/,                        // Comentarios de bloque
+  /\bDROP\b/i,
+  /\bDELETE\b/i,
+  /\bINSERT\b/i,
+  /\bUPDATE\b/i,
+  /\bTRUNCATE\b/i,
+  /\bALTER\b/i,
+  /\bCREATE\b/i,
+  /\bGRANT\b/i,
+  /\bREVOKE\b/i,
+  /\bEXEC\b/i,
+  /\bEXECUTE\b/i,
+  /\bINTO\s+OUTFILE\b/i,
+  /\bINTO\s+DUMPFILE\b/i,
+  /\bLOAD_FILE\b/i,
+  /\bUNION\b/i,                  // Prevenir UNION-based injection
+  /\bINFORMATION_SCHEMA\b/i,     // Prevenir enumeración de schema
+  /\bpg_/i,                      // Prevenir acceso a tablas de sistema PostgreSQL
+]
+
+// Tablas permitidas para consultas
+const ALLOWED_TABLES = [
+  'products',
+  'categories',
+  'sales',
+  'sale_items',
+  'customers',
+  'cash_sessions',
+  'suppliers',
+  'stock_movements',
+  'purchases',
+  'purchase_items',
+  'products_low_stock',
+  'products_expiring_soon',
+  'sales_daily_summary',
+]
+
+function validateSQL(sql: string): { valid: boolean; error?: string } {
+  const normalizedSQL = sql.trim().toUpperCase()
+
+  // 1. Debe empezar con SELECT
+  if (!normalizedSQL.startsWith('SELECT')) {
+    return { valid: false, error: 'Solo se permiten consultas de lectura (SELECT)' }
+  }
+
+  // 2. Verificar patrones peligrosos
+  for (const pattern of DANGEROUS_SQL_PATTERNS) {
+    if (pattern.test(sql)) {
+      return { valid: false, error: 'La consulta contiene patrones no permitidos' }
+    }
+  }
+
+  // 3. Verificar que solo accede a tablas permitidas
+  const sqlLower = sql.toLowerCase()
+  const fromMatch = sqlLower.match(/\bfrom\s+([a-z_]+)/g)
+  const joinMatch = sqlLower.match(/\bjoin\s+([a-z_]+)/g)
+
+  const tablesUsed: string[] = []
+  if (fromMatch) {
+    fromMatch.forEach(m => {
+      const table = m.replace(/^(from|join)\s+/i, '').trim()
+      tablesUsed.push(table)
+    })
+  }
+  if (joinMatch) {
+    joinMatch.forEach(m => {
+      const table = m.replace(/^(from|join)\s+/i, '').trim()
+      tablesUsed.push(table)
+    })
+  }
+
+  for (const table of tablesUsed) {
+    if (!ALLOWED_TABLES.includes(table)) {
+      return { valid: false, error: `Tabla no permitida: ${table}` }
+    }
+  }
+
+  return { valid: true }
+}
+
 export async function queryDashboardNaturalLanguage(
   question: string
 ): Promise<{ data: unknown; explanation: string; error?: string }> {
   try {
     const supabase = await createServerActionClient()
+
+    // Verificar autenticación
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { data: null, explanation: '', error: 'No autenticado' }
+    }
 
     // 1. Convertir pregunta a SQL
     const { sql, explanation } = await generateSQLFromNaturalLanguage(
@@ -212,13 +322,13 @@ export async function queryDashboardNaturalLanguage(
       return { data: null, explanation, error: explanation }
     }
 
-    // 2. Validar que es un SELECT (seguridad adicional en cliente)
-    const normalizedSQL = sql.trim().toUpperCase()
-    if (!normalizedSQL.startsWith('SELECT')) {
+    // 2. Validación estricta de seguridad
+    const validation = validateSQL(sql)
+    if (!validation.valid) {
       return {
         data: null,
         explanation: '',
-        error: 'Solo se permiten consultas de lectura (SELECT)',
+        error: validation.error || 'Consulta no permitida por razones de seguridad',
       }
     }
 
@@ -253,6 +363,12 @@ export async function queryDashboardNaturalLanguage(
 
 export async function syncProductEmbeddings(): Promise<SyncEmbeddingsResult> {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { synced: 0, errors: 0 }
+  }
 
   // Obtener productos sin embedding
   const { data: products, error } = await supabase
@@ -311,6 +427,14 @@ export async function searchProducts(
   query: string
 ): Promise<{ products: ProductWithSimilarity[]; error: string | null }> {
   try {
+    const supabase = await createServerActionClient()
+
+    // Verificar autenticación
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { products: [], error: 'No autenticado' }
+    }
+
     const products = await searchProductsByQuery(query, 10)
     return { products: products ?? [], error: null }
   } catch (error) {

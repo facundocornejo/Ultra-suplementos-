@@ -56,6 +56,20 @@ export const saleSchema = z.object({
     .optional()
     .default(0),
 
+  surcharge_percent: z
+    .number()
+    .min(0, 'El recargo no puede ser negativo')
+    .max(100, 'El recargo no puede ser mayor a 100%')
+    .optional()
+    .default(0),
+
+  surcharge_amount: z
+    .number()
+    .min(0, 'El monto de recargo no puede ser negativo')
+    .max(MAX_PRICE, 'El monto de recargo es demasiado alto')
+    .optional()
+    .default(0),
+
   total: z
     .number()
     .min(0, 'El total debe ser mayor a 0')
@@ -75,12 +89,12 @@ export const saleSchema = z.object({
   )
   .refine(
     (data) => {
-      const calculatedTotal = data.subtotal - (data.discount_amount || 0)
+      const calculatedTotal = data.subtotal - (data.discount_amount || 0) + (data.surcharge_amount || 0)
       // Permitir una pequena diferencia por redondeo
       return Math.abs(data.total - calculatedTotal) < 1
     },
     {
-      message: 'El total no coincide con subtotal menos descuento',
+      message: 'El total no coincide con subtotal - descuento + recargo',
       path: ['total'],
     }
   )

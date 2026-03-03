@@ -13,6 +13,15 @@
 # testing
 /coverage
 
+# E2E tests (Playwright Python)
+/e2e/storage/auth_state.json
+/e2e/screenshots/
+/e2e/__pycache__/
+/e2e/**/__pycache__/
+*.pyc
+.pytest_cache/
+htmlcov/
+
 # next.js
 /.next/
 /out/
@@ -39,3 +48,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude Code (planning/context files)
+.claude/
+tasks/
+tmpclaude-*
+
+# Temp/test files
+testin.txt
+
+# Supabase migrations (ya aplicadas en producción)
+supabase/migrations/

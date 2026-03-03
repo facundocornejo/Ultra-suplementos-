@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -36,24 +36,21 @@ interface ProductSearchProps {
 
 export function ProductSearch({ products, onProductSelect }: ProductSearchProps) {
   const [search, setSearch] = useState('')
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
 
-  useEffect(() => {
-    if (search.trim() === '') {
-      setFilteredProducts([])
-      return
-    }
+  // Usar useMemo en lugar de useEffect + setState para evitar renders cascading
+  const filteredProducts = useMemo(() => {
+    if (search.trim() === '') return []
 
     const searchLower = search.toLowerCase()
-    const filtered = products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(searchLower) ||
-        product.sku?.toLowerCase().includes(searchLower) ||
-        product.barcode?.toLowerCase().includes(searchLower) ||
-        getCategoryName(product.categories).toLowerCase().includes(searchLower)
-    )
-
-    setFilteredProducts(filtered.slice(0, 10)) // Mostrar máximo 10 resultados
+    return products
+      .filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchLower) ||
+          product.sku?.toLowerCase().includes(searchLower) ||
+          product.barcode?.toLowerCase().includes(searchLower) ||
+          getCategoryName(product.categories).toLowerCase().includes(searchLower)
+      )
+      .slice(0, 10) // Mostrar máximo 10 resultados
   }, [search, products])
 
   const handleProductClick = (product: Product) => {
@@ -61,8 +58,7 @@ export function ProductSearch({ products, onProductSelect }: ProductSearchProps)
       return
     }
     onProductSelect(product)
-    setSearch('')
-    setFilteredProducts([])
+    setSearch('') // Limpiar búsqueda limpia automáticamente filteredProducts via useMemo
   }
 
   return (

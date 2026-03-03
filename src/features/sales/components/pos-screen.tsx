@@ -11,6 +11,7 @@ import { SaleCompleteDialog } from './sale-complete-dialog'
 import { useCart } from '../hooks/use-cart'
 import { createSale } from '../actions'
 import { toast } from 'sonner'
+import type { PaymentSurcharges } from '@/features/settings/schemas/settings-schema'
 
 type Product = {
   id: string
@@ -29,11 +30,17 @@ type PaymentMethod = 'cash' | 'debit' | 'credit' | 'transfer' | 'mercadopago'
 
 interface POSScreenProps {
   products: Product[]
+  surcharges: PaymentSurcharges
 }
 
-export function POSScreen({ products }: POSScreenProps) {
+export function POSScreen({ products, surcharges }: POSScreenProps) {
   const { items, addItem, removeItem, updateQuantity, clear, subtotal } = useCart()
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
+
+  // Calcular recargo según método de pago
+  const surchargePercent = surcharges[paymentMethod] || 0
+  const surchargeAmount = Math.round(subtotal * (surchargePercent / 100) * 100) / 100
+  const total = subtotal + surchargeAmount
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [completedSaleId, setCompletedSaleId] = useState<string | null>(null)
@@ -67,9 +74,11 @@ export function POSScreen({ products }: POSScreenProps) {
       const saleData = {
         customer_id: null,
         payment_method: paymentMethod,
-        subtotal: subtotal, // Subtotal antes de descuentos
-        discount_amount: 0, // Sin descuento por ahora
-        total: subtotal,    // Total = subtotal - descuento
+        subtotal: subtotal,
+        discount_amount: 0,
+        surcharge_percent: surchargePercent,
+        surcharge_amount: surchargeAmount,
+        total: total,
         items: items.map((item) => ({
           product_id: item.productId,
           product_name: item.name,
@@ -175,6 +184,13 @@ export function POSScreen({ products }: POSScreenProps) {
             <CardContent className="p-6 space-y-4">
               <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
 
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center text-xl font-bold">
+                  <span>Total a cobrar:</span>
+                  <span className="text-orange-600">${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
@@ -187,7 +203,7 @@ export function POSScreen({ products }: POSScreenProps) {
                 className="w-full h-14 text-lg"
                 size="lg"
               >
-                {isProcessing ? 'Procesando...' : 'Completar Venta'}
+                {isProcessing ? 'Procesando...' : `Cobrar $${total.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}
               </Button>
             </CardContent>
           </Card>
@@ -200,7 +216,7 @@ export function POSScreen({ products }: POSScreenProps) {
           open={showCompleteDialog}
           onOpenChange={setShowCompleteDialog}
           saleId={completedSaleId}
-          total={subtotal}
+          total={total}
           onNewSale={handleNewSale}
         />
       )}

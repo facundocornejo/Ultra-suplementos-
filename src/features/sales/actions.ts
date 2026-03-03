@@ -7,8 +7,11 @@ import { saleSchema, type SaleFormData } from './schemas/sale-schema'
 export async function createSale(saleData: SaleFormData) {
   const supabase = await createServerActionClient()
 
-  // Log para debug
-  console.log('createSale received:', JSON.stringify(saleData, null, 2))
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   // Validar con Zod
   const validationResult = saleSchema.safeParse(saleData)
@@ -64,6 +67,14 @@ export async function createSale(saleData: SaleFormData) {
     .limit(1)
     .single()
 
+  // Validar que haya una sesión de caja abierta
+  if (!activeSession) {
+    return {
+      data: null,
+      error: 'No hay sesión de caja abierta. Abrí una sesión de caja antes de registrar ventas.',
+    }
+  }
+
   // Generar sale_number con formato YYYYMMDD-NNN
   const today = new Date()
   const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '')
@@ -95,8 +106,10 @@ export async function createSale(saleData: SaleFormData) {
       payment_method: validatedData.payment_method,
       subtotal: validatedData.subtotal,
       discount_amount: validatedData.discount_amount ?? 0,
+      surcharge_percent: validatedData.surcharge_percent ?? 0,
+      surcharge_amount: validatedData.surcharge_amount ?? 0,
       total: validatedData.total,
-      cash_session_id: activeSession?.id || null,
+      cash_session_id: activeSession.id,
     })
     .select()
     .single()
@@ -151,6 +164,12 @@ export async function createSale(saleData: SaleFormData) {
 export async function getSale(id: string) {
   const supabase = await createServerActionClient()
 
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
+
   const { data: sale, error } = await supabase
     .from('sales')
     .select(`
@@ -187,6 +206,12 @@ export async function getSales(params?: {
   paymentMethod?: string
 }) {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: 'No autenticado' }
+  }
 
   let query = supabase
     .from('sales')
@@ -225,6 +250,12 @@ export async function getSales(params?: {
 
 export async function getTodaySales() {
   const supabase = await createServerActionClient()
+
+  // Verificar autenticación
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { total: 0, count: 0, error: 'No autenticado' }
+  }
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)

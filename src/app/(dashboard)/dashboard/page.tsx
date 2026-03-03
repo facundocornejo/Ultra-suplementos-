@@ -1,7 +1,8 @@
 import { getDashboardStats, getRecentSales } from '@/features/dashboard/actions'
 import { LowStockWidget } from '@/features/dashboard/widgets/low-stock-widget'
 import { ExpirationAlertsWidget } from '@/features/dashboard/widgets/expiration-alerts-widget'
-import { DashboardQueryInput } from '@/features/ai/components'
+// IA deshabilitada temporalmente - API quota agotada
+// import { DashboardQueryInput } from '@/features/ai/components'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDateTime } from '@/shared/lib/formatters'
@@ -163,8 +164,8 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* AI Dashboard Query */}
-      <DashboardQueryInput />
+      {/* AI Dashboard Query - deshabilitado temporalmente */}
+      {/* <DashboardQueryInput /> */}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
