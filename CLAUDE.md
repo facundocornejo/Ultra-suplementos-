@@ -14,6 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Task Tracking**: Plan in `tasks/todo.md`, mark items complete as you go, document results.
 
+**Elegance Check**: For non-trivial changes, pause and ask "is there a more elegant way?" Balance simplicity with clean design.
+
 **Core Principles**: Simplicity first, minimal impact, find root causes (no temp fixes).
 
 ## Commands

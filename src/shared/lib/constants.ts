@@ -66,6 +66,7 @@ export const ROUTES = {
   LOGIN: '/login',
   DASHBOARD: '/dashboard',
   PRODUCTS: '/dashboard/products',
+  CATEGORIES: '/dashboard/categories',
   SALES: '/dashboard/sales',
   CASH: '/dashboard/cash',
   CUSTOMERS: '/dashboard/customers',

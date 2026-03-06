@@ -110,27 +110,6 @@ export async function getProduct(id: string) {
   return { data, error: null }
 }
 
-export async function getCategories() {
-  const supabase = await createServerActionClient()
-
-  // Verificar autenticación
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { data: null, error: 'No autenticado' }
-  }
-
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name', { ascending: true })
-
-  if (error) {
-    console.error('Error fetching categories:', error)
-    return { data: null, error: error.message }
-  }
-
-  return { data, error: null }
-}
 
 export async function getLocations() {
   const supabase = await createServerActionClient()

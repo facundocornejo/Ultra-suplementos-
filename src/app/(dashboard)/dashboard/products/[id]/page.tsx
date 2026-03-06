@@ -1,8 +1,5 @@
-import {
-  getProduct,
-  getCategories,
-  getLocations,
-} from '@/features/products/actions'
+import { getProduct, getLocations } from '@/features/products/actions'
+import { getCategories } from '@/features/categories/actions'
 import { ProductForm } from '@/features/products/components/product-form'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'

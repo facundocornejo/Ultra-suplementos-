@@ -1,4 +1,5 @@
-import { getProducts, getCategories } from '@/features/products/actions'
+import { getProducts } from '@/features/products/actions'
+import { getCategories } from '@/features/categories/actions'
 import { ProductList } from '@/features/products/components/product-list'
 
 export default async function ProductsPage() {
