@@ -160,6 +160,8 @@ export async function createProduct(formData: FormData) {
   const cleanedData = {
     ...rawData,
     description: rawData.description?.trim() || null,
+    category_id: rawData.category_id?.trim() || '',
+    location_id: rawData.location_id?.trim() || '',
     expiration_date: rawData.expiration_date?.trim() || null,
     image_url: rawData.image_url?.trim() || null,
   }
@@ -219,6 +221,8 @@ export async function updateProduct(id: string, formData: FormData) {
   const cleanedData = {
     ...rawData,
     description: rawData.description?.trim() || null,
+    category_id: rawData.category_id?.trim() || '',
+    location_id: rawData.location_id?.trim() || '',
     expiration_date: rawData.expiration_date?.trim() || null,
     image_url: rawData.image_url?.trim() || null,
   }

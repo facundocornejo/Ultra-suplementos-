@@ -28,6 +28,7 @@ export const productSchema = z.object({
   category_id: z
     .string()
     .min(1, 'Debe seleccionar una categoria')
+    .trim()
     .uuid('Categoria invalida'),
 
   purchase_price: moneySchema.refine((val) => val >= 0, {
@@ -63,6 +64,7 @@ export const productSchema = z.object({
   location_id: z
     .string()
     .min(1, 'Debe seleccionar una ubicacion')
+    .trim()
     .uuid('Ubicacion invalida'),
 })
   .refine(

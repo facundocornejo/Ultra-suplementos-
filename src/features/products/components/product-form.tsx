@@ -108,10 +108,17 @@ export function ProductForm({ categories, locations, product }: ProductFormProps
 
     startTransition(async () => {
       try {
-        if (product) {
-          await updateProduct(product.id, formData)
-        } else {
-          await createProduct(formData)
+        const result = product
+          ? await updateProduct(product.id, formData)
+          : await createProduct(formData)
+
+        if (result?.error) {
+          if (result.fieldErrors) {
+            const messages = Object.values(result.fieldErrors).flat().join(', ')
+            setError(messages || result.error)
+          } else {
+            setError(result.error)
+          }
         }
       } catch {
         setError('Ocurrio un error al guardar el producto')
