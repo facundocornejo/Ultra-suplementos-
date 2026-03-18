@@ -214,7 +214,11 @@ export function POSScreen({ products, surcharges }: POSScreenProps) {
       {completedSaleId && (
         <SaleCompleteDialog
           open={showCompleteDialog}
-          onOpenChange={setShowCompleteDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleNewSale()
+            }
+          }}
           saleId={completedSaleId}
           total={total}
           onNewSale={handleNewSale}
