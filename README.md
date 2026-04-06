@@ -1,91 +1,83 @@
-Ultra Suplementos ERP
-Sistema de gestión integral diseñado para la operación diaria de comercios de suplementos deportivos. El proyecto centraliza la lógica de negocio, el control de inventario y la inteligencia comercial en una plataforma robusta y escalable.
+# Ultra Suplementos ERP
 
- Soluciones de Negocio
-El sistema resuelve los puntos críticos de la operación minorista:
+Sistema de gestión integral para la operación diaria de un comercio de suplementos deportivos.
 
-Control de Inventario: Gestión de stock con alertas automáticas de niveles bajos y trazabilidad de vencimientos por lote.
+Este proyecto fue desarrollado con el objetivo de modelar un escenario real de negocio: ventas de mostrador, control de stock, compras, caja, reportes y soporte operativo dentro de una única plataforma. Más que una interfaz administrativa, la idea fue construir una base sólida para un ERP moderno, modular y escalable.
 
-Punto de Venta (POS): Interfaz optimizada para mostrador que permite registrar ventas y emitir comprobantes PDF en tiempo real.
+## Descripción
 
-Gestión de Caja: Control total de sesiones (apertura, movimientos manuales de entrada/salida y cierre ciego).
+En muchos comercios minoristas, tareas clave como controlar stock, registrar ventas, seguir vencimientos, abrir y cerrar caja o analizar rentabilidad todavía se resuelven con procesos manuales, planillas dispersas o herramientas desconectadas entre sí.
 
-Compras y Proveedores: Registro de ingresos de mercadería, gestión de costos y catálogo de proveedores.
+**Ultra Suplementos ERP** busca centralizar toda esa operación en un solo sistema, con foco en:
 
-Reportes Comerciales: Seguimiento de rentabilidad, volumen de ventas y desempeño por categorías.
+- orden operativo
+- trazabilidad
+- velocidad de uso en el día a día
+- escalabilidad técnica a futuro
 
-Soporte IA: Módulo de asistencia para marketing y análisis de datos integrado con Gemini API.
+## Objetivo del proyecto
 
- Stack Técnico
-Frontend: Next.js 16 (App Router), TypeScript, Tailwind CSS v4.
+Con este proyecto busqué trabajar sobre un caso más cercano a un entorno real de negocio que a una app académica aislada.
 
-UI: shadcn/ui, Radix UI y Lucide Icons.
+Los objetivos principales fueron:
 
-Backend & DB: Supabase (PostgreSQL, Auth, Storage).
+- diseñar una arquitectura modular orientada a funcionalidades
+- separar lógica de dominio, infraestructura y presentación
+- implementar reglas de negocio típicas de un ERP comercial
+- construir una base mantenible para seguir agregando módulos sin romper lo existente
 
-Forms & Validation: React Hook Form + Zod.
+## Funcionalidades principales
 
-Gráficos & Docs: Recharts y @react-pdf/renderer.
+### Gestión de inventario
+- alta, edición y organización de productos
+- control de stock
+- alertas de bajo stock
+- seguimiento de vencimientos
+- soporte para imágenes de productos
 
-Testing: Vitest y Testing Library para lógica de negocio y componentes.
+### Punto de venta (POS)
+- flujo de venta pensado para atención en mostrador
+- selección rápida de productos
+- múltiples métodos de pago
+- emisión de comprobantes en PDF
 
- Arquitectura y Organización
-El proyecto adopta una arquitectura modular basada en Features, lo que permite aislar la lógica de dominio de la infraestructura técnica.
+### Gestión de caja
+- apertura de caja
+- registro de movimientos manuales
+- seguimiento de ingresos y egresos
+- cierre de caja con control de diferencias
 
-Bash
-.
-├── src/
-│   ├── app/                # Routing, layouts y API endpoints
-│   ├── features/           # Módulos funcionales (products, sales, cash, etc.)
-│   ├── core/               # Infraestructura (Supabase, PDF generation)
-│   ├── shared/             # Hooks, utilidades y constantes globales
-│   ├── components/ui/      # Componentes base de diseño
-│   └── proxy.ts            # Middleware de protección de rutas y sesión
-├── supabase/               # SQL Seeds, políticas RLS y configuración
-└── docs/                   # Documentación técnica extendida
-Lógica de Módulos
-Cada funcionalidad dentro de src/features sigue un patrón predecible:
+### Compras y proveedores
+- registro de ingresos de mercadería
+- actualización de costos
+- administración de proveedores
 
-actions.ts: Mutaciones y consultas server-side.
+### Reportes comerciales
+- métricas de ventas
+- seguimiento de rentabilidad
+- análisis por categorías y movimientos del negocio
 
-components/: UI específica del módulo.
+### Soporte con IA
+- integración pensada para asistencia en tareas de marketing y análisis de datos mediante Gemini API
 
-schemas/: Validaciones con Zod para integridad de datos.
+## Stack tecnológico
 
-hooks/: Lógica de estado reusable en el cliente.
+- **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS
+- **UI:** shadcn/ui, Radix UI, Lucide Icons
+- **Backend y base de datos:** Supabase (PostgreSQL, Auth, Storage)
+- **Validaciones y formularios:** React Hook Form + Zod
+- **Visualización y documentos:** Recharts, @react-pdf/renderer
+- **Testing:** Vitest + Testing Library
 
- Documentación Adicional
-Para entender a fondo las decisiones técnicas y facilitar el desarrollo, revisá los siguientes archivos en /docs:
+## Arquitectura
 
-Architecture: Detalle de capas, convenciones de código y decisiones de diseño.
+El proyecto sigue una arquitectura modular, organizada por funcionalidades, para mantener cada dominio aislado y hacer más simple su evolución.
 
-Onboarding: Guía paso a paso para el setup del entorno y checklist del primer día.
-
-Features Map: Estado actual de cada módulo, rutas asociadas y tablas de base de datos involucradas.
-
-Contributing: Reglas para colaboradores, flujo de Git y criterios de revisión de código.
-
-ADRs (Architecture Decisions): Registro de decisiones clave tomadas durante el desarrollo.
-
- Setup Local
-Dependencias:
-
-Bash
-npm install
-Variables de Entorno:
-Configurar .env.local con las credenciales de Supabase:
-
-NEXT_PUBLIC_SUPABASE_URL
-
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-SUPABASE_SERVICE_ROLE_KEY
-
-GEMINI_API_KEY (Opcional)
-
-Desarrollo:
-Desarrollado por Facundo Cornejo
-Full-Stack Developer | AI-Augmented Development
-
-Bash
-npm run dev
+```bash
+src/
+├── app/                 # Routing, layouts y endpoints
+├── features/            # Módulos funcionales del sistema
+├── core/                # Infraestructura y lógica transversal
+├── shared/              # Hooks, utilidades, tipos y constantes
+├── components/ui/       # Componentes base del sistema de diseño
+└── proxy.ts             # Protección de rutas y manejo de sesión
